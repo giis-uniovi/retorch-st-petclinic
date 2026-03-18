@@ -3,11 +3,23 @@ updates:
   - package-ecosystem: maven
     directory: "/"
     schedule:
-      interval: monthly
+      interval: weekly
+      day: "friday"
+      time: "00:50"
+      timezone: "Europe/Madrid"
+    rebase-strategy: "disabled"
+    assignees:
+      - "ClaudiodelaRiva"
     open-pull-requests-limit: 20
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: monthly
+      interval: weekly
+      day: "friday"
+      time: "00:50"
+      timezone: "Europe/Madrid"
+    rebase-strategy: "disabled"
+    assignees:
+      - "ClaudiodelaRiva"
     open-pull-requests-limit: 20
