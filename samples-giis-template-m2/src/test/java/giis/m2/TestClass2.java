@@ -21,7 +21,7 @@ public class TestClass2 {
 	}
 	@Test
 	public void testFunction21() {
-		assertEquals("11-12", new Class2().function21());
+		assertEquals("fail11-12", new Class2().function21());
 	}
 
 }
