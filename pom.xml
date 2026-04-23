@@ -32,7 +32,7 @@
 
 		<selema.version>4.0.2</selema.version>
 
-		<retorch-annotations.version>1.1.0</retorch-annotations.version>
+		<retorch-tool.version>1.2.0</retorch-tool.version>
 
 	</properties>
 
@@ -73,13 +73,13 @@
 		<dependency>
 			<groupId>io.github.giis-uniovi</groupId>
 			<artifactId>retorch-annotations</artifactId>
-			<version>${retorch-annotations.version}</version>
+			<version>${retorch-tool.version}</version>
 		</dependency>
-		<!--<dependency>
+		<dependency>
 			<groupId>io.github.giis-uniovi</groupId>
 			<artifactId>retorch-orchestration</artifactId>
-			<version>1.1.1-SNAPSHOT</version>
-		</dependency>-->
+			<version>${retorch-tool.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
