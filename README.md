@@ -50,7 +50,7 @@ Both scripts handle all setup steps automatically:
 clone the `spring-petclinic-microservices` repository (required to build the Grafana and Prometheus images),
 create the `jenkins_network` Docker network if it does not exist, build the images, start the containers and
 wait up to 200 seconds for the application to be ready.
-Once the SUT is up, it is accessible at `http://localhost:<port>` (default `http://localhost:8080`).
+Once the SUT is up, it is accessible at `http://localhost:<port>` (default `http://localhost:5000`).
 
 ### CI deployment — Jenkins
 

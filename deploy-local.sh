@@ -17,7 +17,7 @@ ENV_FILE=".retorch/envfiles/local.env"
 COMPOSE_FILE="docker-compose.yml"
 MAX_WAIT_SECS=200
 POLL_INTERVAL=5
-PORT=8080
+PORT=5000
 DOWN=false
 
 step() { echo "[>] $*"; }

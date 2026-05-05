@@ -12,13 +12,18 @@ import org.slf4j.LoggerFactory;
  * This class incorporates support methods for interacting with the web UI through clicking actions.
  */
 public class Click {
+
     private static final Logger log = LoggerFactory.getLogger(Click.class);
 
     /**
      * Clicks on the specified WebElement using the default method provided by the browser. If that method fails, it attempts to perform the click operation using JavaScript.
-     * @param ele  WebElement that is intended to be clicked.
+     *
+     * @param driver WebDriver where the click is intended to be performed.
+     * @param ele    WebElement that is intended to be clicked.
+     * @param waiter Waiter used to make the explicits waits for the element
+     *
      */
-    public static WebDriver element(WebDriver driver,Waiter waiter, WebElement ele) throws ElementNotFoundException {
+    public static WebDriver element(WebDriver driver, Waiter waiter, WebElement ele) throws ElementNotFoundException {
         String tagName = ele.getTagName();
         String text = ele.getText();
 
@@ -40,6 +45,12 @@ public class Click {
         throw new ElementNotFoundException("Click.element ERROR");
     }
 
+    /**
+     * Clicks on the specified WebElement using JavaScript.
+     *
+     * @param driver WebDriver that is used to click into the element
+     * @param we     WebElement that is intended to be clicked.
+     */
     public static void byJS(WebDriver driver, WebElement we) {
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("var evt = document.createEvent('MouseEvents');"
