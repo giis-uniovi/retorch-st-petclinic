@@ -13,34 +13,38 @@ import org.slf4j.LoggerFactory;
  */
 public class Navigation {
 
-    public static final Logger log = LoggerFactory.getLogger(Navigation.class);
+    private static final Logger log = LoggerFactory.getLogger(Navigation.class);
 
     public void goToHomePage(WebDriver driver, Waiter waiter) throws ElementNotFoundException {
         log.debug("Navigating to Home");
-        waiter.navWait(driver, "a[title='home page']", "Home nav link not clickable");
+        waiter.navWait("a[title='home page']", "Home nav link not clickable");
         Click.element(driver, waiter, driver.findElement(By.cssSelector("a[title='home page']")));
+        waiter.waitForHomePage();
     }
 
     public void goToFindOwners(WebDriver driver, Waiter waiter) throws ElementNotFoundException {
         log.debug("Navigating to Find Owners page");
-        waiter.navWait(driver, "a[title='find owners']", "Find Owners nav link not clickable");
+        waiter.navWait("a[title='find owners']", "Find Owners nav link not clickable");
         Click.element(driver, waiter, driver.findElement(By.cssSelector("a[title='find owners']")));
+        waiter.waitForOwnersListPage();
     }
 
     public void goToRegisterOwner(WebDriver driver, Waiter waiter) throws ElementNotFoundException {
         log.debug("Navigating to Register Owner page");
-        waiter.navWait(driver, "a[title='register owner']", "Register Owner nav link not clickable");
+        waiter.navWait("a[title='register owner']", "Register Owner nav link not clickable");
         Click.element(driver, waiter, driver.findElement(By.cssSelector("a[title='register owner']")));
+        waiter.waitForRegisterOwnerPage();
     }
 
     public void goToVetsPage(WebDriver driver, Waiter waiter) throws ElementNotFoundException {
         log.debug("Navigating to Veterinarians page");
-        waiter.navWait(driver, "a[title='veterinarians']", "Veterinarians nav link not clickable");
+        waiter.navWait("a[title='veterinarians']", "Veterinarians nav link not clickable");
         Click.element(driver, waiter, driver.findElement(By.cssSelector("a[title='veterinarians']")));
+        waiter.waitForVetsPage();
     }
 
-    public void goToOwnerDetails(String firstName, String lastName, WebDriver driver, Waiter waiter) throws ElementNotFoundException {
-        log.debug("Navigating to owner {} details page", firstName + " " + lastName);
+    public void goToOwnerDetails( WebDriver driver, Waiter waiter,String firstName, String lastName) throws ElementNotFoundException {
+        log.debug("Navigating to owner {} {} details page", firstName, lastName);
         String fullName = firstName + " " + lastName;
         waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.linkText(fullName)),
                 "Owner link '" + fullName + "' not visible in the owners list");

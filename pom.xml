@@ -83,6 +83,10 @@
 	</dependencies>
 
 	<build>
+		<!-- Isolate each TJob's compiled classes, surefire reports and coverage data
+		     under its own subdirectory so parallel CI runs do not overwrite each other.
+		     Falls back to 'target/local' when TJOB_NAME is not set (see local-execution profile). -->
+		<directory>${project.basedir}/target/${TJOB_NAME}</directory>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -245,6 +249,19 @@
 
 	<!-- To publish packages (mvn deploy) a profile must be specified (github for snapsots and maven central for releases) -->
 	<profiles>
+		<profile>
+			<!-- Activated automatically when TJOB_NAME is not passed as a -D property,
+			     i.e. during local IDE or command-line runs outside of CI. -->
+			<id>local-execution</id>
+			<activation>
+				<property>
+					<name>!TJOB_NAME</name>
+				</property>
+			</activation>
+			<properties>
+				<TJOB_NAME>local</TJOB_NAME>
+			</properties>
+		</profile>
 		<profile>
 			<id>publish-github</id>
 			<distributionManagement>

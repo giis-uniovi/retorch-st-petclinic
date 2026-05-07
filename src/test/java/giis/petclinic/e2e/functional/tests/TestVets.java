@@ -22,13 +22,17 @@ class TestVets extends BaseLoggedClass {
     @AccessMode(resID = "web-browser", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "frontend", concurrency = 10, sharing = true, accessMode = "READONLY")
     @Test
-    @DisplayName("testVetList")
-    void testVetList() throws ElementNotFoundException {
+    @DisplayName("ListVeterinaries")
+    void listVeterinaries() throws ElementNotFoundException {
         log.debug("Test: the veterinarians list is populated");
         navUtils.goToVetsPage(driver, waiter);
         waiter.waitUntil(ExpectedConditions.numberOfElementsToBeMoreThan(By.cssSelector("table.table-striped tbody tr"),
                 0), "No veterinarian data rows loaded");
         List<WebElement> vetRows = driver.findElements(By.cssSelector("table.table-striped tbody tr"));
+        Assertions.assertFalse(
+                driver.findElements(By.cssSelector("table.table-striped th")).isEmpty(),
+                "Vet table is missing column headers"
+        );
         Assertions.assertFalse(vetRows.isEmpty(), "Expected at least one veterinarian in the table but found none");
     }
 }

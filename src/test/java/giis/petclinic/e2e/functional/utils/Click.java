@@ -20,8 +20,7 @@ public class Click {
      *
      * @param driver WebDriver where the click is intended to be performed.
      * @param ele    WebElement that is intended to be clicked.
-     * @param waiter Waiter used to make the explicits waits for the element
-     *
+     * @param waiter Waiter used to make the explicit waits for the element
      */
     public static WebDriver element(WebDriver driver, Waiter waiter, WebElement ele) throws ElementNotFoundException {
         String tagName = ele.getTagName();

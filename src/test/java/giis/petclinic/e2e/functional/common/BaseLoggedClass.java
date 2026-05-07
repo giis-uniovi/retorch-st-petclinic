@@ -28,8 +28,8 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 
-/*
- * This class contains common set-up, tear-down, browser setup, login, and logout methods utilized across various
+/**
+ * This class contains common set-up, tear-down and browser setup methods utilized across the different
  * test cases within the test suite. All classes implementing test cases inherit from this class to execute
  * consistent set-up and tear-down procedures before each case. Additionally, it provides common clearance and
  * preparation methods shared among the test cases.
@@ -37,7 +37,7 @@ import java.util.Properties;
 @ExtendWith(LifecycleJunit5.class)
 public class BaseLoggedClass {
 
-    public static final Logger log = LoggerFactory.getLogger(BaseLoggedClass.class);
+    protected static final Logger log = LoggerFactory.getLogger(BaseLoggedClass.class);
 
     private static final SeleManager seleManager = new SeleManager(new SelemaConfig()
             .setReportSubdir("target/containerlogs/" + (System.getProperty("TJOB_NAME") == null ? "" : System.getProperty("TJOB_NAME")))
@@ -51,7 +51,7 @@ public class BaseLoggedClass {
 
 
     @BeforeAll()
-    static void setupAll() throws IOException { //28 lines
+    static void setupAll() throws IOException {
         log.info("Starting Global Set-up for all the Test Cases");
         properties = new Properties();
         properties.load(Files.newInputStream(Paths.get("src/test/resources/test.properties")));
@@ -68,7 +68,6 @@ public class BaseLoggedClass {
         }
         setupBrowser();
         log.info("Ending global setup for all test cases.");
-
     }
 
     /**
@@ -107,14 +106,12 @@ public class BaseLoggedClass {
 
     /**
      * Registers a new owner via the form fulfilling all the necessary fields, requires
-     * the all the owner data.
+     * all the owner data: firstName,lastName, address, city and telephone.
      */
     protected void createOwner(String firstName, String lastName, String address,
                                String city, String telephone) throws ElementNotFoundException {
         log.debug("Creating a owner with name: {}, last name: {}, address: {}, city: {} and telephone: {}", firstName, lastName, address, city, telephone);
         navUtils.goToRegisterOwner(driver, waiter);
-        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.name("firstName")),
-                "Owner registration form not loaded");
         log.debug("Filling the form fields to register owner");
         fillField("firstName", firstName);
         fillField("lastName", lastName);
@@ -123,6 +120,8 @@ public class BaseLoggedClass {
         fillField("telephone", telephone);
         log.debug("Clicking on register button");
         Click.element(driver, waiter, driver.findElement(By.cssSelector("button[type='submit']")));
+        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(
+                By.linkText(firstName + " " + lastName)), "Owner '" + firstName + " " + lastName + "' not found in list after creation");
     }
 
     protected void createPet(String name, String birthDate, String type) throws ElementNotFoundException {
@@ -131,6 +130,9 @@ public class BaseLoggedClass {
         waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.name("name")),
                 "Pet form not loaded");
         driver.findElement(By.name("name")).sendKeys(name);
+        setDateInput(driver.findElement(By.cssSelector("input[type='date']")), birthDate);
+        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(
+                By.cssSelector("input[type='date']")), "Pet date input not visible");
         setDateInput(driver.findElement(By.cssSelector("input[type='date']")), birthDate);
         waiter.waitUntil(
                 ExpectedConditions.visibilityOfAllElementsLocatedBy(
@@ -157,14 +159,17 @@ public class BaseLoggedClass {
      * so the ng-model binding is updated.
      */
     protected void setDateInput(WebElement dateField, String isoDate) {
-        log.debug("Setting date field {} to {}", isoDate, dateField);
+        log.debug("Setting date field {} to {}", dateField, isoDate);
+        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(
+                By.cssSelector("input[type='date']")), "Date input not visible");
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("arguments[0].value = arguments[1]", dateField, isoDate);
         js.executeScript("angular.element(arguments[0]).triggerHandler('input')", dateField);
     }
 
     @AfterEach
-    void tearDown(TestInfo testInfo) {
+    void tearDown(TestInfo testInfo) throws ElementNotFoundException {
+        navUtils.goToHomePage(driver,waiter);
         log.info("Disposing user and releasing/closing browser for the test {}", testInfo.getDisplayName());
     }
 
