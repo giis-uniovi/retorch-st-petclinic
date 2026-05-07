@@ -16,12 +16,14 @@ public class Waiter {
     private static final int NAV_WAIT_SECONDS = 30;
     private static final int WAIT_DEFAULT = 10;
     private final WebDriverWait waiter;
+    private final WebDriverWait navWaiter;
 
     public Waiter(WebDriver driver) {
         waiter = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DEFAULT));
+        navWaiter = new WebDriverWait(driver, Duration.ofSeconds(NAV_WAIT_SECONDS));
     }
 
-    public void waitUntil(ExpectedCondition condition, String errorMessage) {
+    public void waitUntil(ExpectedCondition <?> condition, String errorMessage) {
         try {
             this.waiter.until(condition);
         } catch (org.openqa.selenium.TimeoutException timeout) {
@@ -30,9 +32,9 @@ public class Waiter {
         }
     }
 
-    public void navWait(WebDriver driver, String cssSelector, String errorMessage) {
+    public void navWait(String cssSelector, String errorMessage) {
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(NAV_WAIT_SECONDS))
+            navWaiter
                     .until(ExpectedConditions.elementToBeClickable(By.cssSelector(cssSelector)));
         } catch (org.openqa.selenium.TimeoutException e) {
             throw new org.openqa.selenium.TimeoutException(
@@ -40,16 +42,34 @@ public class Waiter {
         }
     }
 
+    public void waitForHomePage() {
+        log.debug("Waiting for home page to load");
+        waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("img.img-responsive")),
+                "Home page did not load");
+    }
+
     public void waitForOwnersListPage() {
         log.debug("Waiting for owner list to load");
-        waitUntil(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h2[text()='Owners']")),
+        waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input.form-control[placeholder='Search Filter']")),
                 "Owners list page did not load");
     }
 
+    public void waitForRegisterOwnerPage() {
+        log.debug("Waiting for register owner page to load");
+        waitUntil(ExpectedConditions.visibilityOfElementLocated(By.name("firstName")),
+                "Register owner page did not load");
+    }
+
     public void waitForOwnerDetailsPage() {
-        log.debug("Waiting for owners details page to load");
-        waitUntil(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h2[text()='Owner Information']")),
+        log.debug("Waiting for owner details page to load");
+        waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("a[href*='pets/new']")),
                 "Owner details page did not load");
+    }
+
+    public void waitForVetsPage() {
+        log.debug("Waiting for veterinarians page to load");
+        waitUntil(ExpectedConditions.numberOfElementsToBeMoreThan(By.cssSelector("table.table-striped tbody tr"), 0),
+                "Veterinarians page did not load");
     }
 
     /**
@@ -57,13 +77,13 @@ public class Waiter {
      * owner details page, retrying with a full page refresh up to {@code maxRetries}
      * times.
      */
-    public void waitForVisitText(String expectedText, WebDriver driver, Waiter waiter) {
+    public void waitForVisitText(String expectedText, WebDriver driver) {
         log.debug("Waiting for visit text {} in the visits table", expectedText);
         int maxRetries = 3;
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                waiter.waitUntil(ExpectedConditions.textToBePresentInElementLocated(
-                        By.cssSelector("table.table-condensed"), expectedText), "");
+                this.waitUntil(ExpectedConditions.textToBePresentInElementLocated(
+                        By.cssSelector("table.table-condensed"), expectedText), "Visit text '" + expectedText + "' not yet visible in visits table");
                 return;
             } catch (org.openqa.selenium.TimeoutException e) {
                 if (attempt < maxRetries) {

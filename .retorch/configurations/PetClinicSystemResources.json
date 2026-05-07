@@ -1,4 +1,5 @@
-{"web-browser": {
+{
+  "web-browser": {
     "hierarchyParent": [],
     "replaceable": [],
     "elasticityModel": {
@@ -23,7 +24,6 @@
       }
     ],
     "dockerImage": "web-browser;eexit/mirror-http-server"
-
   },
   "frontend": {
     "hierarchyParent": [],
@@ -50,10 +50,11 @@
       }
     ],
     "dockerImage": "frontend;eexit/mirror-http-server"
-
   },
   "vet": {
-    "hierarchyParent": ["petclinicdb"],
+    "hierarchyParent": [
+      "petclinicdb"
+    ],
     "replaceable": [],
     "elasticityModel": {
       "elasticityID": "elasModelVet",
@@ -77,10 +78,11 @@
       }
     ],
     "dockerImage": "vet;eexit/mirror-http-server"
-
   },
   "owner": {
-    "hierarchyParent": ["petclinicdb"],
+    "hierarchyParent": [
+      "petclinicdb"
+    ],
     "replaceable": [],
     "elasticityModel": {
       "elasticityID": "elasModelOwner",
@@ -104,14 +106,15 @@
       }
     ],
     "dockerImage": "owner;eexit/mirror-http-server"
-
   },
   "pet": {
-    "hierarchyParent": ["petclinicdb"],
+    "hierarchyParent": [
+      "petclinicdb"
+    ],
     "replaceable": [],
     "elasticityModel": {
       "elasticityID": "elasModelPet",
-      "elasticity": 25,
+      "elasticity": 15,
       "elasticityCost": 5.0
     },
     "resourceType": "LOGICAL",
@@ -131,10 +134,11 @@
       }
     ],
     "dockerImage": "pet;eexit/mirror-http-server"
-
   },
   "visit": {
-    "hierarchyParent": ["petclinicdb"],
+    "hierarchyParent": [
+      "petclinicdb"
+    ],
     "replaceable": [],
     "elasticityModel": {
       "elasticityID": "elasModelVisit",
@@ -158,6 +162,5 @@
       }
     ],
     "dockerImage": "visit;eexit/mirror-http-server"
-
   }
 }

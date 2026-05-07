@@ -29,6 +29,10 @@ class TestVets extends BaseLoggedClass {
         waiter.waitUntil(ExpectedConditions.numberOfElementsToBeMoreThan(By.cssSelector("table.table-striped tbody tr"),
                 0), "No veterinarian data rows loaded");
         List<WebElement> vetRows = driver.findElements(By.cssSelector("table.table-striped tbody tr"));
+        Assertions.assertFalse(
+                driver.findElements(By.cssSelector("table.table-striped th")).isEmpty(),
+                "Vet table is missing column headers"
+        );
         Assertions.assertFalse(vetRows.isEmpty(), "Expected at least one veterinarian in the table but found none");
     }
 }

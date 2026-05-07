@@ -14,6 +14,7 @@ import org.openqa.selenium.By;
 class TestPets extends BaseLoggedClass {
 
     @AccessMode(resID = "pet", concurrency = 1, sharing = false, accessMode = "READWRITE")
+    @AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "web-browser", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "frontend", concurrency = 10, sharing = true, accessMode = "READONLY")
     @Test
@@ -22,9 +23,11 @@ class TestPets extends BaseLoggedClass {
         log.debug("Starting Test: add a pet to an owner and verify it appears in the owner details");
         createOwner("Harold", "Davis", "563 Friendly St.", "Windsor", "608555882020");
         waiter.waitForOwnersListPage();
-        navUtils.goToOwnerDetails("Harold", "Davis", driver, waiter);
+        navUtils.goToOwnerDetails( driver, waiter,"Harold", "Davis");
         createPet("Leo", "2015-09-07", "cat");
-        Assertions.assertFalse(driver.findElements(By.linkText("Leo")).isEmpty(),
-                "Pet 'Leo' not found in owner details");
+        Assertions.assertFalse(
+                driver.findElements(By.linkText("Leo")).isEmpty(),
+                "Pet 'Leo' not found in owner details (" + driver.findElements(By.linkText("Leo")).size() + " matching elements found)"
+        );
     }
 }

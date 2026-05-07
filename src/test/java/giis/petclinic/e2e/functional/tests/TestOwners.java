@@ -12,6 +12,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This test class provides the test methods that validate the functionalities of PetClinic related
@@ -19,21 +20,40 @@ import java.util.List;
  */
 class TestOwners extends BaseLoggedClass {
 
-    @AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "DYNAMIC")
+    @AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "web-browser", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "frontend", concurrency = 10, sharing = true, accessMode = "READONLY")
     @Test
-    @DisplayName("testOwnerCreationAndSearch")
-    void testOwnerCreationAndSearch() throws ElementNotFoundException {
-        log.debug("Test: create owner and locate it in the owners list");
+    @DisplayName("testOwnerCreation")
+    void testOwnerCreation() throws ElementNotFoundException {
+        log.debug("Test: create owner and verify it appears in the owners list");
         createOwner("George", "Franklin", "110 W. Liberty St.", "Madison", "608555102030");
         waiter.waitForOwnersListPage();
-        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.linkText("George Franklin")), "Owner 'George Franklin' not found in the owners list after creation");
-        List<WebElement> matches = driver.findElements(By.linkText("George Franklin"));
-        Assertions.assertFalse(matches.isEmpty(), "Expected at least one link for 'George Franklin' in the list");
-        WebElement searchInput = driver.findElement(By.cssSelector("input.form-control[placeholder='Search Filter']"));
-        searchInput.sendKeys("Franklin");
-        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.partialLinkText("Franklin")), "Owner 'Franklin' not visible after applying search filter");
+        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.linkText("George Franklin")),
+                "Owner 'George Franklin' not found in the owners list after creation");
+        Assertions.assertFalse(driver.findElements(By.linkText("George Franklin")).isEmpty(),
+                "Expected at least one link for 'George Franklin' in the list");
+    }
+
+    @AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "READWRITE")
+    @AccessMode(resID = "web-browser", concurrency = 1, sharing = false, accessMode = "READWRITE")
+    @AccessMode(resID = "frontend", concurrency = 10, sharing = true, accessMode = "READONLY")
+    @Test
+    @DisplayName("testOwnerSearch")
+    void testOwnerSearch() throws ElementNotFoundException {
+        log.debug("Test: search filter narrows owners list to matching entries only");
+        createOwner("Maria", "Rodriguez", "170 Pine St.", "Lakewood", "608555200300");
+        waiter.waitForOwnersListPage();
+        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.linkText("Maria Rodriguez")),
+                "Owner 'Maria Rodriguez' not found in the owners list after creation");
+        driver.findElement(By.cssSelector("input.form-control[placeholder='Search Filter']")).sendKeys("Rodriguez");
+        waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.partialLinkText("Rodriguez")),
+                "No 'Rodriguez' owner visible after applying search filter");
+        List<WebElement> visibleOwners = driver.findElements(By.cssSelector("table.table-striped tbody tr td a"));
+        Assertions.assertTrue(
+                visibleOwners.stream().allMatch(e -> e.getText().toLowerCase().contains("rodriguez")),
+                "Search filter did not hide non-matching owners: " +
+                visibleOwners.stream().map(WebElement::getText).collect(Collectors.joining(", ")));
     }
 
     @AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "READWRITE")
@@ -45,7 +65,7 @@ class TestOwners extends BaseLoggedClass {
         log.debug("Starting test that check the user edition");
         createOwner("Betty", "Davis", "638 Cardinal Ave.", "Sun Prairie", "608555174020");
         waiter.waitForOwnersListPage();
-        navUtils.goToOwnerDetails("Betty", "Davis", driver, waiter);
+        navUtils.goToOwnerDetails( driver, waiter,"Betty", "Davis");
         Click.element(driver, waiter, driver.findElement(By.linkText("Edit Owner")));
         waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.name("telephone")), "Edit owner form not loaded");
         WebElement telephoneField = driver.findElement(By.name("telephone"));
