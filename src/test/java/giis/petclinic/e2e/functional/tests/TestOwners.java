@@ -31,8 +31,6 @@ class TestOwners extends BaseLoggedClass {
         waiter.waitForOwnersListPage();
         waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.linkText("George Franklin")),
                 "Owner 'George Franklin' not found in the owners list after creation");
-        Assertions.assertFalse(driver.findElements(By.linkText("George Franklin")).isEmpty(),
-                "Expected at least one link for 'George Franklin' in the list");
     }
 
     @AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "READWRITE")
@@ -63,6 +61,7 @@ class TestOwners extends BaseLoggedClass {
     @DisplayName("EditPetOwner")
     void editPetOwner() throws ElementNotFoundException {
         log.debug("Starting test that check the user edition");
+        String updatedNumber = "608555174099";
         createOwner("Betty", "Davis", "638 Cardinal Ave.", "Sun Prairie", "608555174020");
         waiter.waitForOwnersListPage();
         navUtils.goToOwnerDetails( driver, waiter,"Betty", "Davis");
@@ -70,10 +69,9 @@ class TestOwners extends BaseLoggedClass {
         waiter.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.name("telephone")), "Edit owner form not loaded");
         WebElement telephoneField = driver.findElement(By.name("telephone"));
         telephoneField.clear();
-        telephoneField.sendKeys("608555174099");
+        telephoneField.sendKeys(updatedNumber);
         Click.element(driver, waiter, driver.findElement(By.cssSelector("button[type='submit']")));
         waiter.waitForOwnerDetailsPage();
-        waiter.waitUntil(ExpectedConditions.textToBePresentInElementLocated(By.cssSelector("table.table-striped"), "608555174099"), "Updated telephone '608555174099' not displayed after editing the owner");
-        Assertions.assertTrue(driver.findElement(By.cssSelector("table.table-striped")).getText().contains("608555174099"), "Updated telephone '608555174099' not found in owner details table");
+        waiter.waitUntil(ExpectedConditions.textToBePresentInElementLocated(By.cssSelector("table.table-striped"), updatedNumber), "Updated telephone '608555174099' not displayed after editing the owner");
     }
 }
