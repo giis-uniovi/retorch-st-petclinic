@@ -1,7 +1,6 @@
 package giis.petclinic.e2e.functional;
 
 
-
 import giis.retorch.orchestration.classifier.EmptyInputException;
 import giis.retorch.orchestration.generator.OrchestrationGenerator;
 import giis.retorch.orchestration.orchestrator.NoFinalActivitiesException;
@@ -17,8 +16,7 @@ import java.net.URISyntaxException;
 class RetorchGenerateJenkinfileTest {
     @Test
     void testGenerateJenkinsfile() throws NoFinalActivitiesException, NoTGroupsInTheSchedulerException, EmptyInputException, IOException, URISyntaxException, NotValidSystemException, ClassNotFoundException {
-        OrchestrationGenerator orch= new OrchestrationGenerator();
-        orch.generateJenkinsfile("giis.petclinic.e2e.functional.tests","PetClinic", "./");
+        OrchestrationGenerator orch = new OrchestrationGenerator();
+        orch.generateJenkinsfile("giis.petclinic.e2e.functional.tests", "PetClinic", "./");
     }
 }
-
