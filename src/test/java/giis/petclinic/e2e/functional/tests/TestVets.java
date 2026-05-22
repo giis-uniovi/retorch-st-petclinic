@@ -21,6 +21,7 @@ class TestVets extends BaseLoggedClass {
     @AccessMode(resID = "vet", concurrency = 1, sharing = false, accessMode = "READONLY")
     @AccessMode(resID = "web-browser", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "frontend", concurrency = 10, sharing = true, accessMode = "READONLY")
+    @AccessMode(resID = "gateway", concurrency = 10, sharing = true, accessMode = "READONLY")
     @Test
     @DisplayName("ListVeterinaries")
     void listVeterinaries() throws ElementNotFoundException {

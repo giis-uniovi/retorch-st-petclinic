@@ -51,6 +51,33 @@
     ],
     "dockerImage": "frontend;eexit/mirror-http-server"
   },
+
+  "gateway": {
+    "hierarchyParent": [],
+    "replaceable": [],
+    "elasticityModel": {
+      "elasticityID": "elasModelGateway",
+      "elasticity": 4,
+      "elasticityCost": 20.0
+    },
+    "resourceType": "LOGICAL",
+    "resourceID": "gateway",
+    "minimalCapacities": [
+      {
+        "name": "memory",
+        "quantity": 0.048
+      },
+      {
+        "name": "processor",
+        "quantity": 0.25
+      },
+      {
+        "name": "storage",
+        "quantity": 0.31
+      }
+    ],
+    "dockerImage": "gateway;eexit/mirror-http-server"
+  },
   "vet": {
     "hierarchyParent": [
       "petclinicdb"
