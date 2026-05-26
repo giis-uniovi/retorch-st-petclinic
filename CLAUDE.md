@@ -154,7 +154,7 @@ mvn test -Dtest="<TestClass#method>" -DTJOB_NAME="<TJOB_NAME>" -DSUT_URL="<SUT_U
 ## Known issues and design decisions
 
 ### Eventual consistency in visits
-The visits-service is a separate microservice. After `POST /api/visit/…`, the API Gateway's composite `GET /api/gateway/owners/{id}` may briefly return stale visit data. `TestApiGateway.testGatewayOwnerPetHasVisits` includes a 500 ms sleep before the assertion. The frontend `Waiter.waitForVisitText` uses a refresh-retry loop (up to 3 attempts) for the same reason.
+The visits-service is a separate microservice. After `POST /api/visit/…`, the API Gateway's composite `GET /api/gateway/owners/{id}` may briefly return stale visit data. `TestApiGateway.testGatewayOwnerPetHasVisits` polls the gateway endpoint (up to `VISIT_PROPAGATION_TIMEOUT_MS = 10 000 ms`, every `VISIT_PROPAGATION_POLL_MS = 250 ms`) using `LockSupport.parkNanos` — never `Thread.sleep`, which triggers Sonar rule `java:S2925`. The frontend `Waiter.waitForVisitText` uses a refresh-retry loop (up to 3 attempts) for the same reason.
 
 ### Parallel build isolation
 Multiple TJobs run concurrently in CI, each calling `mvn test` in the same workspace. The `<directory>` override in `pom.xml` plus per-TJob log files prevent classpath and log file collisions.
@@ -186,9 +186,13 @@ Uses `ExpectedConditions.numberOfElementsToBeMoreThan(tbody tr, 0)` rather than 
 The API tests share a single base class that hides HTTP plumbing and JSON ceremony so the test bodies stay focused on the scenario.
 
 ### HTTP verbs
-- `get(url)`, `getStatus(url)` — bare body / status only
-- `post(url, body)`, `postStatus(url, body)` — create operations
-- `put(url, body)` — update operations (PetClinic returns HTTP 204, so only the status variant exists)
+- `get(url)` — GET, returns response body as `String`
+- `getStatus(url)` — GET, returns HTTP status code
+- `post(url, body)` — POST, returns response body as `String`
+- `postStatus(url, body)` — POST, returns HTTP status code
+- `put(url, body)` — PUT, returns HTTP status code (PetClinic always returns 204 with empty body)
+
+Internally, all status-returning methods delegate to a private `statusOf(HttpUriRequest)` helper that executes the request and logs the result. Request building is separated from execution via private `buildPost` and `buildPut` factories, so `post` and `postStatus` share the same `HttpPost` construction, and `put` uses `buildPut`.
 
 ### JSON parsing
 - `getJsonObject(url)` — GET and parse the response as a `JsonObject`
@@ -197,6 +201,7 @@ The API tests share a single base class that hides HTTP plumbing and JSON ceremo
 
 ### URL builders
 - `vetUrl(path)`, `customerUrl(path)`, `visitUrl(path)`, `gatewayUrl(path)` — one per API Gateway route prefix; prevents typos and centralizes the base URL.
+- `visitsPath(ownerId, petId)` — builds the repeating path segment `/owners/{o}/pets/{p}/visits`; used when constructing both the visit creation URL and the visit list URL.
 
 ### Unique test-data generation
 - `unique()` — returns `System.currentTimeMillis()` as a uniqueness suffix
@@ -247,4 +252,4 @@ void testUpdateOwner() throws IOException {
 ```
 
 ### Eventual consistency
-The gateway endpoint (`GET /api/gateway/owners/{id}`) merges customer + visits data reactively. After creating a visit, the visit may not appear in the composite response immediately. `TestApiGateway` uses a polling helper (`pollForVisit`) with `LockSupport.parkNanos` for backoff — never `Thread.sleep` (flagged by the lint rule `java:S2925`).
+The gateway endpoint (`GET /api/gateway/owners/{id}`) merges customer + visits data reactively. After creating a visit, the visit may not appear in the composite response immediately. `TestApiGateway` uses a private `pollForVisit(ownerId, description)` helper that retries with `LockSupport.parkNanos` backoff — never `Thread.sleep` (flagged by Sonar rule `java:S2925`). The timeout constants `VISIT_PROPAGATION_TIMEOUT_MS` and `VISIT_PROPAGATION_POLL_MS` are defined at the top of `TestApiGateway`.
