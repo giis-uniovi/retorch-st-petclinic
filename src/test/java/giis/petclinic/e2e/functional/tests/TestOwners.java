@@ -36,6 +36,7 @@ class TestOwners extends BaseLoggedClass {
     @AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "web-browser", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "frontend", concurrency = 10, sharing = true, accessMode = "READONLY")
+    @AccessMode(resID = "gateway", concurrency = 10, sharing = true, accessMode = "READONLY")
     @Test
     @DisplayName("SearchPetOwner")
     void searchPetOwner() throws ElementNotFoundException {
@@ -57,6 +58,7 @@ class TestOwners extends BaseLoggedClass {
     @AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "web-browser", concurrency = 1, sharing = false, accessMode = "READWRITE")
     @AccessMode(resID = "frontend", concurrency = 10, sharing = true, accessMode = "READONLY")
+    @AccessMode(resID = "gateway", concurrency = 10, sharing = true, accessMode = "READONLY")
     @Test
     @DisplayName("EditPetOwner")
     void editPetOwner() throws ElementNotFoundException {
