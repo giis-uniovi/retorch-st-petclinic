@@ -11,3 +11,6 @@ org.sonarlint.eclipse.core.prefs
 
 # Cloned sut
 spring-petclinic-microservices
+
+# Never commit binaries (e.g. the RETORCH standalone orchestration jar)
+*.jar
