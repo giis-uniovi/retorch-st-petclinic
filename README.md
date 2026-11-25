@@ -10,6 +10,10 @@ Spring PetClinic Microservices is a sample reference application based on the
 distributed microservices architecture using Spring Cloud, Spring Cloud Gateway, Eureka, Zipkin, Grafana and Prometheus,
 all running in Docker containers.
 
+<p align="center">
+  <img src="img/hero-petclinic.svg" alt="Main screen of Spring PetClinic (the owners list) on desktop and mobile" width="900"/>
+</p>
+
 ## Deployment instructions
 
 ### Prerequisites
@@ -58,3 +62,9 @@ The `Jenkinsfile` at the repository root defines the full pipeline used by the o
 It relies on the lifecycle scripts located in `.retorch/scripts/` and the environment files in
 `.retorch/envfiles/`. The GitHub Actions workflow (`.github/workflows/test.yml`) only compiles the project;
 the actual test execution is delegated to Jenkins.
+
+---
+
+<p align="center">
+  <a href="https://giis.uniovi.es/"><img src="img/giis-footer.svg" alt="GIIS - Software Engineering Research Group, University of Oviedo" height="28"/></a>
+</p>
