@@ -1,0 +1,75 @@
+{
+  "tjobs" : [ {
+    "id" : "tjoba",
+    "stage" : 0,
+    "resources" : [ "frontend", "gateway", "owner", "pet", "web-browser" ],
+    "tests" : [ "TestPets#addPetToOwner" ],
+    "predecessors" : [ ]
+  }, {
+    "id" : "tjobb",
+    "stage" : 0,
+    "resources" : [ "frontend", "gateway", "owner", "pet", "visit", "web-browser" ],
+    "tests" : [ "TestVisits#addVisitToPet" ],
+    "predecessors" : [ ]
+  }, {
+    "id" : "tjobc",
+    "stage" : 0,
+    "resources" : [ "frontend", "gateway", "owner", "web-browser" ],
+    "tests" : [ "TestOwners#editPetOwner", "TestOwners#searchPetOwner" ],
+    "predecessors" : [ ]
+  }, {
+    "id" : "tjobd",
+    "stage" : 0,
+    "resources" : [ "frontend", "gateway", "vet", "web-browser" ],
+    "tests" : [ "TestVets#listVeterinaries" ],
+    "predecessors" : [ ]
+  }, {
+    "id" : "tjobe",
+    "stage" : 0,
+    "resources" : [ "gateway", "owner" ],
+    "tests" : [ "TestApiOwners#testAPICreateOwner", "TestApiGateway#testAPIGatewayOwnerFields", "TestApiOwners#testAPIUpdateOwner" ],
+    "predecessors" : [ ]
+  }, {
+    "id" : "tjobf",
+    "stage" : 1,
+    "resources" : [ "frontend", "owner", "web-browser" ],
+    "tests" : [ "TestOwners#createNewPetOwner" ],
+    "predecessors" : [ "tjoba" ]
+  }, {
+    "id" : "tjobg",
+    "stage" : 1,
+    "resources" : [ "frontend", "gateway", "web-browser" ],
+    "tests" : [ "TestNavigation#navigationFrontend" ],
+    "predecessors" : [ "tjobb" ]
+  }, {
+    "id" : "tjobh",
+    "stage" : 1,
+    "resources" : [ "gateway", "owner", "pet" ],
+    "tests" : [ "TestApiPets#testAPICreatePet", "TestApiPets#testAPIUpdatePet" ],
+    "predecessors" : [ "tjobd" ]
+  }, {
+    "id" : "tjobi",
+    "stage" : 1,
+    "resources" : [ "gateway", "owner", "pet", "visit" ],
+    "tests" : [ "TestApiVisits#testAPICreateVisit", "TestApiGateway#testAPIGatewayOwnerHasPetsWithVisits", "TestApiVisits#testAPIGetVisitsForMultiplePets", "TestApiVisits#testAPIVisitListStructure" ],
+    "predecessors" : [ "tjobc" ]
+  }, {
+    "id" : "tjobj",
+    "stage" : 2,
+    "resources" : [ "gateway", "pet" ],
+    "tests" : [ "TestApiPets#testAPIGetPetTypes" ],
+    "predecessors" : [ "tjobi" ]
+  }, {
+    "id" : "tjobk",
+    "stage" : 2,
+    "resources" : [ "gateway", "vet" ],
+    "tests" : [ "TestApiVets#testAPIGetVetList" ],
+    "predecessors" : [ "tjobh" ]
+  }, {
+    "id" : "tjobl",
+    "stage" : 2,
+    "resources" : [ "gateway", "owner" ],
+    "tests" : [ "TestApiOwners#testAPIListOwners" ],
+    "predecessors" : [ "tjobg" ]
+  } ]
+}
