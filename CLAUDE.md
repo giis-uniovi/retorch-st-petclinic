@@ -19,10 +19,10 @@ The SUT is **not committed** to this repository. It is cloned and started by the
 
 ```bash
 # Linux/macOS
-./deploy-local.sh
+./deploy.sh
 
 # Windows PowerShell
-./deploy-local.ps1
+./deploy.ps1
 ```
 
 The scripts clone `https://github.com/giis-uniovi/spring-petclinic-microservices.git`, start Docker Compose, and wait up to 200 seconds for the API Gateway to be ready.
@@ -126,8 +126,8 @@ Each Maven invocation writes compiled classes and surefire reports under `target
 ### Local — full suite
 ```bash
 # Start the SUT first
-./deploy-local.sh        # Linux
-./deploy-local.ps1       # Windows
+./deploy.sh        # Linux
+./deploy.ps1       # Windows
 
 # Run all tests
 mvn test

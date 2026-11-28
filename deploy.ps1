@@ -6,12 +6,16 @@
 .PARAMETER Port
     Host port to expose the api-gateway on (default: 8080).
 .EXAMPLE
-    .\deploy-local.ps1
-    .\deploy-local.ps1 -Port 9090
-    .\deploy-local.ps1 -Down
+    .\deploy.ps1
+    .\deploy.ps1 -Port 9090
+    .\deploy.ps1 -NoBuild
+    .\deploy.ps1 -Down
+.PARAMETER NoBuild
+    Skip the image build.
 #>
 param(
     [switch]$Down,
+    [switch]$NoBuild,
     [int]$Port = 5000
 )
 
@@ -84,10 +88,14 @@ if (-not (Test-Path $SUT_DIR)) {
 }
 
 # ── Build images ──────────────────────────────────────────────────────────────
-Write-Step "Building Docker images..."
-docker compose -f $COMPOSE_FILE --env-file $ENV_FILE --ansi never build
-if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose build failed." }
-Write-OK "Images built."
+if ($NoBuild) {
+    Write-Step "Skipping the image build (-NoBuild)"
+} else {
+    Write-Step "Building Docker images..."
+    docker compose -f $COMPOSE_FILE --env-file $ENV_FILE --ansi never build
+    if ($LASTEXITCODE -ne 0) { Write-Fail "docker compose build failed." }
+    Write-OK "Images built."
+}
 
 # ── Start containers ──────────────────────────────────────────────────────────
 Write-Step "Starting containers (project: '$TJOB_NAME', frontend port: $Port)..."
