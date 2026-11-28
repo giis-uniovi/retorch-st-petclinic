@@ -1,255 +1,73 @@
 # CLAUDE.md — retorch-st-petclinic
 
-This file provides Claude Code with the context needed to work in this repository without re-deriving it each session.
+Demonstrator of the [RETORCH](https://github.com/giis-uniovi/retorch) framework: a Java end-to-end suite for
+[Spring PetClinic Microservices](https://github.com/giis-uniovi/spring-petclinic-microservices) with two kinds of tests: **browser** tests
+(Selenium, AngularJS UI) and **API** tests (HTTP through the API gateway). The SUT is **not** stored here: `deploy.sh` / `deploy.ps1` and the
+`coi-setup` step of the pipeline clone it. See `README.md` for the user documentation.
 
-## Project purpose
+## RETORCH rules (do not break)
 
-End-to-end test suite for the [Spring PetClinic Microservices](https://github.com/giis-uniovi/spring-petclinic-microservices) application, orchestrated with the [RETORCH](https://github.com/giis-uniovi/retorch) framework. The project contains two complementary test suites:
+- Every test method carries `@AccessMode(...)` annotations (`giis.retorch.annotations`) that declare the logical resources it uses and
+  how (`READONLY`/`READWRITE`, concurrency, sharing). The TJob schedule of the `Jenkinsfile` is **generated from them**.
+  - Never drop or alter existing `@AccessMode` annotations when refactoring.
+  - Never rename test classes or methods: the `Jenkinsfile` references them as `Class#method`.
+  - A new test method needs sensible `@AccessMode` values (copy a sibling) and is only run by CI after regenerating the pipeline.
+- `Jenkinsfile`, `.retorch/scripts/`, `.retorch/envfiles/` (except `local.env`), `.retorch/executionplan.json` and the resource model in
+  `.retorch/configurations/*SystemResources.json` are **generated** by `orchestrate.ps1` (it needs the
+  `retorch-orchestration-*-standalone.jar` of the RETORCH tool in the repository root). Do not edit them by hand; put SUT-specific
+  commands in `.retorch/customscriptscode/` and settings in `.retorch/configurations/retorchCI.properties`.
+- Only `retorch-annotations` is a dependency of the tests; the orchestration code is never part of this project.
+- `profiling=true` in `retorchCI.properties` makes the pipeline measure the resources of every TJob and publish
+  `artifacts/usageprofile/usageprofile.html`. `.retorch/customscriptscode/custom-usageprofile` temporarily builds the profiling tool from
+  source; delete it when a release publishes the jar.
 
-- **Frontend (E2E/browser)** — Selenium WebDriver tests that drive the AngularJS UI through Chrome.
-- **API** — HTTP-level tests that call the REST endpoints directly through the API Gateway.
-
-Both suites share the same RETORCH resource model and run under the same CI pipeline.
-
----
-
-## System Under Test (SUT)
-
-The SUT is **not committed** to this repository. It is cloned and started by the deployment scripts at runtime:
-
-```bash
-# Linux/macOS
-./deploy.sh
-
-# Windows PowerShell
-./deploy.ps1
-```
-
-The scripts clone `https://github.com/giis-uniovi/spring-petclinic-microservices.git`, start Docker Compose, and wait up to 200 seconds for the API Gateway to be ready.
-
-**Default local URL:** `http://localhost:5000`
-
-### Microservices and API Gateway routes
-
-| Route prefix | Target service | Example endpoint |
-|---|---|---|
-| `/api/vet/**` | vets-service | `GET /api/vet/vets` |
-| `/api/customer/**` | customers-service | `POST /api/customer/owners` |
-| `/api/visit/**` | visits-service | `POST /api/visit/owners/{o}/pets/{p}/visits` |
-| `/api/gateway/**` | ApiGatewayController (composite) | `GET /api/gateway/owners/{id}` |
-
-The gateway strips the 2-segment prefix before forwarding (e.g., `/api/customer/owners` → `/owners` on the customers-service).
-
----
-
-## Repository layout
+## Layout
 
 ```
 src/test/java/giis/petclinic/e2e/functional/
-├── common/
-│   ├── BaseLoggedClass.java      # Selenium base class (browser lifecycle, shared helpers)
-│   ├── BaseApiClass.java         # HTTP base class (HttpClient lifecycle, REST helpers)
-│   └── ElementNotFoundException.java
-├── tests/
-│   ├── TestOwners.java           # Browser: owner CRUD + search
-│   ├── TestPets.java             # Browser: add pet to owner
-│   ├── TestVisits.java           # Browser: schedule a visit
-│   ├── TestVets.java             # Browser: vet list
-│   ├── TestNavigation.java       # Browser: navbar + page routing
-│   └── api/
-│       ├── TestApiVets.java      # API: GET /api/vet/vets
-│       ├── TestApiOwners.java    # API: CRUD /api/customer/owners
-│       ├── TestApiPets.java      # API: pet types, create/get/update pet
-│       ├── TestApiVisits.java    # API: create/list visits, multi-pet query
-│       └── TestApiGateway.java   # API: composite GET /api/gateway/owners/{id}
-└── utils/
-    ├── Navigation.java           # Page navigation helpers
-    ├── Waiter.java               # Explicit wait helpers
-    └── Click.java                # Safe click with JS fallback
+  common/    BaseLoggedClass (Selenium), BaseApiClass (HTTP), ElementNotFoundException
+  tests/     TestOwners, TestPets, TestVisits, TestVets, TestNavigation          (browser)
+  tests/api/ TestApiVets, TestApiOwners, TestApiPets, TestApiVisits, TestApiGateway
+  utils/     Navigation, Waiter, Click
+src/test/resources/   test.properties (BROWSER_USER, LOCALHOST_URL), log4j2.xml
+deploy.sh / deploy.ps1   local deployment (--port, --no-build, --down); project "default", .retorch/envfiles/local.env
+.retorch/                generated pipeline files + customscriptscode/ (coi-setup clones the SUT), configurations/retorchCI.properties
+orchestrate.ps1 + Jenkinsfile   regenerate / the generated pipeline: 12 TJobs (tjoba…tjobl) in 3 stages
 ```
 
----
+RETORCH resources: `web-browser`, `frontend`, `gateway`, `vet`, `owner`, `pet`, `visit`. API tests use neither `web-browser` nor `frontend`, so
+read-only API tests can run with higher concurrency.
 
-## Key dependencies
+## SUT facts
 
-| Dependency | Purpose |
-|---|---|
-| JUnit 5 (Jupiter) | Test runner |
-| Selenium WebDriver 4.x | Browser automation (frontend tests) |
-| Selema | Browser lifecycle manager (wraps SeleManager) |
-| Apache HttpClient 4.5.14 | HTTP client (API tests) |
-| Gson 2.14.0 | JSON parsing (API tests) |
-| RETORCH annotations | `@AccessMode` resource declarations for scheduling |
-| Log4j2 + SLF4J | Structured logging with per-TJob log files |
+- Local URL `http://localhost:5000` (the api-gateway); inside the CI network `http://<tjob>-api-gateway:8080`.
+- Routes: `/api/vet/**`, `/api/customer/**`, `/api/visit/**` (the gateway strips the 2-segment prefix) and the composite `/api/gateway/**`.
+- Eventual consistency: after creating a visit the composite `GET /api/gateway/owners/{id}` may briefly be stale. `TestApiGateway` polls with
+  `LockSupport.parkNanos` (never `Thread.sleep`, Sonar `java:S2925`); the UI `Waiter.waitForVisitText` retries with a refresh.
+- The UI renders dates as `yyyy MMM dd` (`2023 Mar 15`) although the backend stores ISO dates.
+- Waits that work: `By.linkText("Edit Owner")` for the owner page (Angular routes have no plain `href`) and
+  `numberOfElementsToBeMoreThan(tbody tr, 0)` for the vets table (it renders empty before the API answers).
 
----
+## Build and test
 
-## RETORCH resource model
+- Java 8 source level (no `var`, records or `List.of`), JUnit Jupiter, Selenium 4, Selema, Apache HttpClient 4.5, Gson, Log4j2.
+- Local run: `./deploy.sh` (or `.\deploy.ps1`), then `mvn test` (or `-Dtest=TestApiVets`). Target: `SUT_URL` property → `SUT_URL` env var →
+  `LOCALHOST_URL` of `test.properties`. `SELENOID_PRESENT` runs the browsers in a Selenoid / Selenium Grid hub.
+- Logs go to `target/testlogs/log${sys:TJOB_NAME:-testinglocal}-test.log`, one file per TJob.
 
-Each test declares the resources it accesses with `@AccessMode`. RETORCH uses these to generate a parallel-safe Jenkinsfile (via `RetorchGenerateJenkinfileTest`).
+## CI
 
-| Resource ID | Represents | Typical access |
-|---|---|---|
-| `frontend` | AngularJS SPA (read-only, high concurrency) | `READONLY, concurrency=10, sharing=true` |
-| `web-browser` | Chrome browser instance | `READWRITE, concurrency=1, sharing=false` |
-| `vet` | Vet data in the database | `READONLY, concurrency=10, sharing=true` (API) / `concurrency=1` (browser) |
-| `owner` | Owner data in the database | `READWRITE, concurrency=1, sharing=false` |
-| `pet` | Pet data in the database | `READWRITE, concurrency=1, sharing=false` |
-| `visit` | Visit data in the database | `READWRITE, concurrency=1, sharing=false` |
+- Jenkins, agent label `xretorch-agent`. Every TJob deploys its **own** copy of the SUT (`--env-file .retorch/envfiles/<tjob>.env
+  -p <tjob>`) on the external network `jenkins_network`, runs its tests and tears it down; the TJobs of a stage run in parallel.
+- The TJob runs `mvn test -Dtest="<Class#method>,..." -DTJOB_NAME=<tjob> -DSUT_URL=<url>`.
+- `pom.xml` builds into `target/${TJOB_NAME}` so parallel TJobs never share compiled classes or reports (profile `local-execution` sets
+  `TJOB_NAME=local` when the property is absent).
+- `.github/workflows/test.yml` only compiles the project (`mvn test-compile`); the tests run in Jenkins.
 
-**API tests do not use `web-browser` or `frontend`** — they interact directly with the HTTP layer. They can therefore run with higher concurrency for read-only operations (e.g., vets).
+## Conventions
 
----
-
-## Configuration
-
-### `src/test/resources/test.properties`
-```properties
-BROWSER_USER=CHROME
-LOCALHOST_URL=http://localhost:5000
-```
-Both `BaseLoggedClass` and `BaseApiClass` read `LOCALHOST_URL` as the SUT base URL. In CI, `SUT_URL` is passed as a system property to override it.
-
-### `src/test/resources/log4j2.xml`
-Log files are written to `target/testlogs/log${sys:TJOB_NAME:-testinglocal}-test.log`. Each parallel TJob writes to a separate file, preventing log overwrites in CI.
-
-### `pom.xml` — per-TJob build directory
-```xml
-<directory>${project.basedir}/target/${TJOB_NAME}</directory>
-```
-Each Maven invocation writes compiled classes and surefire reports under `target/{TJOB_NAME}/`, preventing parallel CI builds from corrupting each other's compiled output. A Maven profile (`local-execution`) defaults `TJOB_NAME=local` when the property is absent.
-
----
-
-## Running tests
-
-### Local — full suite
-```bash
-# Start the SUT first
-./deploy.sh        # Linux
-./deploy.ps1       # Windows
-
-# Run all tests
-mvn test
-```
-
-### Local — specific class
-```bash
-mvn test -Dtest=TestApiVets
-mvn test -Dtest=TestOwners
-```
-
-### CI (Jenkins)
-Tests are executed by the RETORCH TJob lifecycle scripts:
-```bash
-.retorch/scripts/tjoblifecycles/tjob-testexecution.sh <TJOB_NAME> <STAGE> <SUT_URL> "<TestClass#method>"
-```
-which internally runs:
-```bash
-mvn test -Dtest="<TestClass#method>" -DTJOB_NAME="<TJOB_NAME>" -DSUT_URL="<SUT_URL>"
-```
-
----
-
-## Known issues and design decisions
-
-### Eventual consistency in visits
-The visits-service is a separate microservice. After `POST /api/visit/…`, the API Gateway's composite `GET /api/gateway/owners/{id}` may briefly return stale visit data. `TestApiGateway.testGatewayOwnerPetHasVisits` polls the gateway endpoint (up to `VISIT_PROPAGATION_TIMEOUT_MS = 10 000 ms`, every `VISIT_PROPAGATION_POLL_MS = 250 ms`) using `LockSupport.parkNanos` — never `Thread.sleep`, which triggers Sonar rule `java:S2925`. The frontend `Waiter.waitForVisitText` uses a refresh-retry loop (up to 3 attempts) for the same reason.
-
-### Parallel build isolation
-Multiple TJobs run concurrently in CI, each calling `mvn test` in the same workspace. The `<directory>` override in `pom.xml` plus per-TJob log files prevent classpath and log file collisions.
-
-### Date display format
-The PetClinic backend stores dates as ISO strings (`yyyy-MM-dd`) but the AngularJS frontend renders them as `yyyy MMM dd` (e.g., `2023 Mar 15`). `TestVisits` uses the displayed format `"2023 Mar 15"` in its row-level assertion.
-
-### `waitForOwnerDetailsPage` selector
-Uses `By.linkText("Edit Owner")` — the "Add New Pet" href variant (`a[href*='pets/new']`) was tried first but Angular's router does not render a plain `href` attribute for route links, so the link text approach is more reliable.
-
-### `waitForVetsPage` selector
-Uses `ExpectedConditions.numberOfElementsToBeMoreThan(tbody tr, 0)` rather than just table visibility, because the vets table element renders empty before the API response arrives.
-
----
-
-## Code style conventions (for this project)
-
-- **No comments** unless the WHY is non-obvious (constraint, workaround, invariant).
-- **`@DisplayName`** must be a human-readable sentence, not the method name.
-- **Test data isolation**: each test creates its own data using a unique suffix to avoid name collisions across parallel or repeated runs.
-- **`BaseApiClass` helpers**: use `createOwner()`, `createPet()`, `createVisit()` for setup. Do not duplicate the JSON payload construction inline.
-- **Assertions**: use `Assertions.assertAll` when checking multiple fields of the same object.
-- **Logger**: always use the inherited `log` field; never instantiate a new logger in a test class.
-
----
-
-## API test helpers (`BaseApiClass`)
-
-The API tests share a single base class that hides HTTP plumbing and JSON ceremony so the test bodies stay focused on the scenario.
-
-### HTTP verbs
-- `get(url)` — GET, returns response body as `String`
-- `getStatus(url)` — GET, returns HTTP status code
-- `post(url, body)` — POST, returns response body as `String`
-- `postStatus(url, body)` — POST, returns HTTP status code
-- `put(url, body)` — PUT, returns HTTP status code (PetClinic always returns 204 with empty body)
-
-Internally, all status-returning methods delegate to a private `statusOf(HttpUriRequest)` helper that executes the request and logs the result. Request building is separated from execution via private `buildPost` and `buildPut` factories, so `post` and `postStatus` share the same `HttpPost` construction, and `put` uses `buildPut`.
-
-### JSON parsing
-- `getJsonObject(url)` — GET and parse the response as a `JsonObject`
-- `getJsonArray(url)` — GET and parse the response as a `JsonArray`
-- `containsByField(array, fieldName, value)` — true if any element of an array has a matching string field; replaces manual loops over `JsonArray`
-
-### URL builders
-- `vetUrl(path)`, `customerUrl(path)`, `visitUrl(path)`, `gatewayUrl(path)` — one per API Gateway route prefix; prevents typos and centralizes the base URL.
-- `visitsPath(ownerId, petId)` — builds the repeating path segment `/owners/{o}/pets/{p}/visits`; used when constructing both the visit creation URL and the visit list URL.
-
-### Unique test-data generation
-- `unique()` — returns `System.currentTimeMillis()` as a uniqueness suffix
-- `phone(ts)` — formats a timestamp as a 10-digit phone number (PetClinic's validation max)
-
-### JSON payload builders (Gson-backed, no `String.format`)
-- `ownerPayload(firstName, lastName, address, city, telephone)`
-- `petPayload(name, birthDate, typeId)` — without `id`, for create
-- `petPayload(id, name, birthDate, typeId)` — with `id`, for update
-- `visitPayload(visitDate, description)`
-
-### End-to-end fixture creation
-- `createOwner(firstName, lastName, address, city, telephone)` — full control, returns the assigned ID
-- `createOwner(label)` — convenience: derives all fields from `label + unique()`; use when the test does not assert against the owner's specific fields
-- `createPet(ownerId, name, birthDate, typeId)` — returns the assigned pet ID
-- `createVisit(ownerId, petId, date, description)` — returns the raw response
-
-### Typical test shape (read-only)
-```java
-@AccessMode(resID = "vet", concurrency = 10, sharing = true, accessMode = "READONLY")
-@AccessMode(resID = "gateway", concurrency = 10, sharing = true, accessMode = "READONLY")
-@Test
-@DisplayName("GET /api/vet/vets returns HTTP 200 with a non-empty vet list")
-void testGetVetList() throws IOException {
-    Assertions.assertEquals(200, getStatus(vetUrl("/vets")), "Expected HTTP 200");
-    JsonArray vets = getJsonArray(vetUrl("/vets"));
-    Assertions.assertFalse(vets.isEmpty(), "Expected at least one vet in the list");
-}
-```
-
-### Typical test shape (write + verify)
-```java
-@AccessMode(resID = "owner", concurrency = 1, sharing = false, accessMode = "READWRITE")
-@AccessMode(resID = "gateway", concurrency = 10, sharing = true, accessMode = "READONLY")
-@Test
-@DisplayName("PUT /api/customer/owners/{id} returns HTTP 204 and persists the new field values")
-void testUpdateOwner() throws IOException {
-    long ts = unique();
-    int ownerId = createOwner("Update", "Me" + ts, "3 Update Rd.", "OldCity", phone(ts));
-
-    int putStatus = put(customerUrl("/owners/" + ownerId),
-            ownerPayload("Update", "Me" + ts, "3 Update Rd.", "NewCity", phone(ts + 1)));
-    Assertions.assertEquals(204, putStatus, "Updating an owner must return HTTP 204");
-
-    JsonObject owner = getJsonObject(customerUrl("/owners/" + ownerId));
-    Assertions.assertEquals("NewCity", owner.get("city").getAsString(), "city must be updated");
-}
-```
-
-### Eventual consistency
-The gateway endpoint (`GET /api/gateway/owners/{id}`) merges customer + visits data reactively. After creating a visit, the visit may not appear in the composite response immediately. `TestApiGateway` uses a private `pollForVisit(ownerId, description)` helper that retries with `LockSupport.parkNanos` backoff — never `Thread.sleep` (flagged by Sonar rule `java:S2925`). The timeout constants `VISIT_PROPAGATION_TIMEOUT_MS` and `VISIT_PROPAGATION_POLL_MS` are defined at the top of `TestApiGateway`.
+- Comments only for a non-obvious *why*. `@DisplayName` is a readable sentence, not the method name.
+- Each test creates its own data with a unique suffix (parallel and repeated runs must not collide).
+- API setup goes through the `BaseApiClass` helpers (`createOwner()`, `createPet()`, `createVisit()`, `get/post/put` + `*Status`,
+  `getJsonObject/getJsonArray`, `containsByField`); do not rebuild JSON payloads inline.
+- `Assertions.assertAll` for several fields of one object. Use the inherited `log`; never create a logger in a test class.
